@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Protected Access</title>
+  <style>
+    :root {
+      --accent1: #8b5cf6;
+      --accent2: #06b6d4;
+      --bg-color: #0f172a;
+      --card-color: #1e293b;
+      --text-color: #ffffff;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0 10px;
+      transition: background 0.6s ease, color 0.6s ease;
+    }
+
+    .card {
+      background: var(--card-color);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      transition: background 0.6s ease, color 0.6s ease;
+    }
+
+    h2 {
+      margin-bottom: 16px;
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
+
+    /* Sidebar container for those small fixed buttons */
+    #sidebar {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1001;
+      align-items: center;
+      pointer-events: auto;
+    }
+
+    #sidebar button {
+      background: transparent;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    /* Theme toggle button */
+    .theme-toggle {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    }
+    .theme-toggle:hover { transform: rotate(20deg) scale(1.1); transition: transform 0.2s; }
+
+    /* Report button 😋 */
+    .report-btn {
+      background: linear-gradient(135deg, #ff4d6d, #ff758f);
+    }
+
+    /* Plus button */
+    .plus-btn {
+      background: linear-gradient(135deg, #22c55e, #10b981);
+    }
+
+    /* Secret button (🥐) */
+    .secret-btn {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+    }
+
+    /* Password Modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: var(--card-color);
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      width: 100%;
+      max-width: 300px;
+      animation: popIn 0.6s ease forwards;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+
+    .modal-content h3 {
+      margin-bottom: 15px;
+      color: var(--text-color);
+      font-size: 1.1rem;
+    }
+
+    .modal-content input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid var(--accent1);
+      width: 90%;
+      outline: none;
+      font-size: 1rem;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .modal-content button {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      60% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Embossed semi-box */
+    .embossed-box {
+      background: rgba(15, 23, 42, 0.75);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 
+        inset 2px 2px 6px rgba(255, 255, 255, 0.08),
+        inset -2px -2px 6px rgba(0, 0, 0, 0.4),
+        0 8px 24px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+      transform: scale(0.95);
+      opacity: 0;
+      animation: popIn 0.6s ease forwards;
+      margin-top: 20px;
+    }
+
+    .menu-btn, .page2-btn {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      border: none;
+      padding: 14px;
+      width: 100%;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      margin: 8px 0;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .info-box {
+      display: none;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      text-align: left;
+      line-height: 1.4rem;
+    }
+
+    .albab-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #fff;
+      cursor: pointer;
+      text-shadow: 0 0 6px var(--accent2), 0 0 12px var(--accent1);
+    }
+
+    /* Gifts */
+    .gifts-btn {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      border: none;
+      border-radius: 14px;
+      padding: 10px 14px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.9rem;
+      z-index: 999;
+    }
+
+    .gifts-panel {
+      position: fixed;
+      bottom: 60px;
+      right: 15px;
+      width: 90%;
+      max-width: 260px;
+      background: rgba(15,23,42,0.95);
+      border-radius: 12px;
+      padding: 15px;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .gifts-panel img {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    /* Left panel */
+    .left-panel {
+      position: fixed;
+      bottom: 15px;
+      left: 15px;
+      background: rgba(15,23,42,0.95);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
+    }
+
+    .left-panel button {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      color: white;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .help-message {
+      display: none;
+      font-size: 0.8rem;
+      text-align: center;
+      text-shadow: 0 0 6px var(--accent2);
+    }
+
+    /* Report Panel */
+    .report-panel {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%; max-width: 500px;
+      background: var(--card-color);
+      color: var(--text-color);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      z-index: 2000;
+      overflow-y: auto;
+      max-height: 80vh;
+    }
+    .report-panel h3 { margin-top: 0; text-align: center; }
+    .close-report {
+      display: block;
+      margin: 15px auto 0;
+      padding: 8px 16px;
+      background: #ff4d6d;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* Popup menu (shown after secret click) */
+    .popup-menu {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 420px;
+      background: var(--card-color);
+      color: var(--text-color);
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      z-index: 2500;
+      display: none;
+      text-align: center;
+    }
+    .popup-menu h3 { margin: 0 0 12px 0; }
+    .popup-menu p { line-height: 1.4; margin-bottom: 14px; text-align:left; white-space:pre-wrap; }
+    .popup-menu .btns { display:flex; gap:10px; justify-content:center; margin-top:8px; }
+    .popup-menu .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+    .popup-menu .go { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#fff; }
+    .popup-menu .close { background:#ff4d6d; color:#fff; }
+    
+    body.light {
+      --bg-color: #f9fafb;
+      --card-color: #ffffff;
+      --text-color: #111827;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar container -->
+  <div id="sidebar">
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    <button class="report-btn" id="reportBtn" title="Report">😋</button>
+    <button class="plus-btn" id="plusBtn" title="More">➕</button>
+    <!-- secret button label changed to 🥐 -->
+    <button class="secret-btn" id="secretBtn" style="display:none;" title="Secret">🥐</button>
+  </div>
+
+  <div class="card">
+    <h2>Protected Access</h2>
+    <div id="protectedContent" style="display:none;">
+      <div class="embossed-box">
+        <div class="albab-title" onclick="handleAlbabClick()">ALBAB QAUM</div>
+
+        <!-- Page 1 -->
+        <div id="page1" style="display:none;">
+          <button class="menu-btn" onclick="toggleInfo('infoAwaken')">Awaken Info</button>
+          <button class="menu-btn" onclick="toggleInfo('infoCareer')">Career</button>
+          <button class="menu-btn" onclick="toggleInfo('infoID')">ID?</button>
+          <button class="menu-btn" onclick="toggleInfo('infoThanks')">Thanksgiving</button>
+          <button class="menu-btn" onclick="toggleInfo('infoLove')">LoVE</button>
+          <div class="info-box" id="infoAwaken"><p><strong>Awaken</strong> is a social media expert who got his name from his beloved...</p></div>
+          <div class="info-box" id="infoCareer"><p>Awaken has built his career through Highs and Lows...</p></div>
+          <div class="info-box" id="infoID"><p><a href="https://instagram.com/awwwken" target="_blank">@awwwken!!💘</a></p></div>
+          <div class="info-box" id="infoThanks"><p>Special thanks to all supporters and my Homies incl. My ♥...</p></div>
+          <div class="info-box" id="infoLove"><p>ROSES ARE RED , Violets are blue..God made us together,*atchu* Alhamdulliah for me..Ya'Hamuk'Allah! for you</p></div>
+
+        </div>
+
+        <!-- Page 2 -->
+        <div id="page2" style="display:none;">
+          <button class="page2-btn" onclick="toggleInfo2('infoBanning2')">Banning</button>
+          <button class="page2-btn" onclick="toggleInfo2('infoFlirt2')">Flirt</button>
+          <button class="page2-btn" onclick="backToPage1()">⬅ Back</button>
+          <div class="info-box" id="infoBanning2"><p><strong>banning krega chotu?</strong></p></div>
+          <div class="info-box" id="infoFlirt2"><p><strong>eww galat baat</strong></p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gifts -->
+  <button class="gifts-btn" id="giftsBtn">🎁 GIFTs</button>
+  <div class="gifts-panel" id="giftsPanel">
+    <h3>Surprise 🎉</h3>
+    <p>This is your special gift area.</p>
+    <img src="https://static.vecteezy.com/system/resources/previews/023/734/627/non_2x/awakenings-graffiti-typography-good-for-graphic-design-resources-posters-banners-printings-stikers-pamflets-and-more-vector.jpg" alt="Graffiti Gift">
+  </div>
+
+  <!-- Left Panel -->
+  <div class="left-panel" id="leftPanel">
+    <button id="helpBtn">HELP</button>
+    <button id="exitBtn">EXIT</button>
+    <div class="help-message" id="helpMessage">NO HELP MY SON</div>
+  </div>
+
+  <!-- Password Modal -->
+  <div class="modal" id="passwordModal">
+    <div class="modal-content">
+      <h3>Enter Password</h3>
+      <input type="password" id="passwordInput" placeholder="🔑 Type the key...">
+      <button id="unlockBtn">Unlock</button>
+    </div>
+  </div>
+
+  <!-- Report Panel -->
+  <div class="report-panel" id="reportPanel">
+    <h3>🚨 Report Guide</h3>
+    <p><strong>HATE</strong> – Words like devil, 666, savage, love, hate, followers, selling, sold, seller, dick, ban, banned, free, method, paid</p>
+    <p><strong>SELF</strong> – Words like suicide, blood, death, dead, kill myself and other similar stuff</p>
+    <p><strong>BULLY</strong> – If you or some other @ get mentioned in some story/post/bio</p>
+    <p><strong>VIOLENT</strong> – Words like hitler, osama bin laden, guns, pictures of guns or soldiers holding guns, people wearing masks, flags etc.</p>
+    <p><strong>ILLEGAL (drugs)</strong> – Drugs, plants, trees, medicines (pics), cocaine, and other drug names</p>
+    <p><strong>Pretending to be someone else</strong> – Username/profile pic like a celebrity or someone with a blue tick. Also if celeb/blue tick mentioned in bio.</p>
+    <p><strong>NUDITY</strong> – Words like nude, sex, send nudes</p>
+    <button class="close-report" id="closeReport">Close</button>
+  </div>
+
+  <!-- Popup menu shown when secret is clicked -->
+  <div class="popup-menu" id="popupMenu" role="dialog" aria-modal="true" aria-hidden="true">
+    <h3>Notice</h3>
+    <p>WE WILL REMOVE THE PEOPLE WHO HURTS OTHER SENTIMENTS (if yk someone ? asap dm on ==>@awwwken)</p>
+    <div class="btns">
+      <button class="btn go" id="goInstaBtn">Go to Instagram</button>
+      <button class="btn close" id="closePopupBtn">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const passwordModal = document.getElementById('passwordModal');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const passwordInput = document.getElementById('passwordInput');
+    const protectedContent = document.getElementById('protectedContent');
+    const themeToggle = document.getElementById('themeToggle');
+    const giftsBtn = document.getElementById('giftsBtn');
+    const giftsPanel = document.getElementById('giftsPanel');
+    const helpBtn = document.getElementById('helpBtn');
+    const exitBtn = document.getElementById('exitBtn');
+    const helpMessage = document.getElementById('helpMessage');
+    const reportBtn = document.getElementById('reportBtn');
+    const reportPanel = document.getElementById('reportPanel');
+    const closeReport = document.getElementById('closeReport');
+    const plusBtn = document.getElementById('plusBtn');
+    const secretBtn = document.getElementById('secretBtn');
+    const leftPanel = document.getElementById('leftPanel');
+    const sidebar = document.getElementById('sidebar');
+    const popupMenu = document.getElementById('popupMenu');
+    const goInstaBtn = document.getElementById('goInstaBtn');
+    const closePopupBtn = document.getElementById('closePopupBtn');
+    let albabClickCount = 0;
+
+    // Hide sidebar by default (only show after correct password)
+    sidebar.style.display = 'none';
+
+    // Show password modal on load
+    window.onload = () => { passwordModal.style.display = 'flex'; };
+
+    // Unlock behavior: reveal protected content and sidebar
+    unlockBtn.addEventListener('click', () => {
+      if (passwordInput.value === "AWAKEN") {
+        passwordModal.style.display = 'none';
+        protectedContent.style.display = 'block';
+        sidebar.style.display = 'flex'; // reveal the sidebar buttons after login
+      } else {
+        alert("OYE GALAT HAI YEH BSSDK");
+      }
+    });
+
+    // Albab QAUM logic
+    function handleAlbabClick() {
+      albabClickCount++;
+      if (albabClickCount === 1) {
+        document.getElementById('page1').style.display = 'block';
+        document.getElementById('page2').style.display = 'none';
+      } else {
+        document.getElementById('page1').style.display = 'none';
+        document.getElementById('page2').style.display = 'block';
+      }
+    }
+
+    function toggleInfo(id) {
+      document.querySelectorAll('#page1 .info-box').forEach(box => box.style.display = 'none');
+      const target = document.getElementById(id);
+      if (target) target.style.display = 'block';
+    }
+
+    function toggleInfo2(id) {
+      document.querySelectorAll('#page2 .info-box').forEach(box => box.style.display = 'none');
+      const target = document.getElementById(id);
+      if (target) target.style.display = 'block';
+    }
+
+    function backToPage1() {
+      document.getElementById('page2').style.display = 'none';
+      document.getElementById('page1').style.display = 'block';
+    }
+
+    // Theme Toggle
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      themeToggle.textContent = document.body.classList.contains('light') ? "☀️" : "🌙";
+    });
+
+    // Gifts panel
+    giftsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      giftsPanel.style.display = giftsPanel.style.display === "block" ? "none" : "block";
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!giftsPanel.contains(e.target) && e.target !== giftsBtn) {
+        giftsPanel.style.display = "none";
+      }
+    });
+
+    // Help button
+    helpBtn.addEventListener('click', () => {
+      helpMessage.style.display = helpMessage.style.display === "block" ? "none" : "block";
+    });
+
+    // Exit button
+    exitBtn.addEventListener('click', () => {
+      protectedContent.style.display = 'none';
+      passwordModal.style.display = 'flex';
+      passwordInput.value = "";
+      // hide sidebar again on exit
+      sidebar.style.display = 'none';
+    });
+
+    // Report button
+    reportBtn.addEventListener('click', () => {
+      reportPanel.style.display = "block";
+    });
+    closeReport.addEventListener('click', () => {
+      reportPanel.style.display = "none";
+    });
+
+    // PLUS and SECRET button behavior
+    plusBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // toggle secret button visibility
+      secretBtn.style.display = secretBtn.style.display === "none" ? "flex" : "none";
+    });
+
+    // When secret (🥐) is clicked:
+    // - Hide all panels/areas
+    // - Show only password modal state (as requested)
+    // - Then show popup menu with message and redirect button
+    secretBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+
+      // Hide panels/areas
+      try { protectedContent.style.display = 'none'; } catch(e) {}
+      try { giftsPanel.style.display = 'none'; } catch(e) {}
+      try { reportPanel.style.display = 'none'; } catch(e) {}
+      try { leftPanel.style.display = 'none'; } catch(e) {}
+      try { sidebar.style.display = 'none'; } catch(e) {}
+
+      // Show only password modal (password entering menu)
+      passwordInput.value = "";
+      passwordModal.style.display = 'flex';
+
+      // show popup menu after a tiny delay so user sees the modal state
+      setTimeout(() => {
+        popupMenu.style.display = 'block';
+        popupMenu.setAttribute('aria-hidden', 'false');
+      }, 120);
+
+      // focus input shortly after display
+      setTimeout(() => {
+        try { passwordInput.focus(); } catch(e) {}
+      }, 150);
+    });
+
+    // Popup menu buttons
+    goInstaBtn.addEventListener('click', () => {
+      // open instagram in new tab - @awwwken
+      window.open('https://instagram.com/awwwken', '_blank', 'noopener');
+    });
+
+    closePopupBtn.addEventListener('click', () => {
+      popupMenu.style.display = 'none';
+      popupMenu.setAttribute('aria-hidden', 'true');
+      // keep showing only password modal and keep sidebar hidden (per your earlier instruction)
+    });
+
+    // Close popup if clicking outside it (but don't close the password modal)
+    document.addEventListener('click', (e) => {
+      if (popupMenu.style.display === 'block' && !popupMenu.contains(e.target) && e.target !== secretBtn) {
+        popupMenu.style.display = 'none';
+        popupMenu.setAttribute('aria-hidden', 'true');
+      }
+    });
+
+    // Keep existing behavior intact — clicking outside other panels still works
+  </script>
+</body>
+</html>
